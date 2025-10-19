@@ -1,0 +1,5 @@
+{
+  "name": "Math Practice for Kids",
+  "description": "A fun application for children to practice vertical addition and subtraction problems. Users can configure the difficulty and number of problems, and get a summary of their results at the end.",
+  "requestFramePermissions": []
+}
