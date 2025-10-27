@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import type { Problem } from '../types';
 import CheckIcon from './icons/CheckIcon';
@@ -10,7 +9,7 @@ interface PracticeScreenProps {
   currentProblemNumber: number;
   totalProblems: number;
   maxDigits: number;
-  onAnswerUpdate: (answer: number) => void;
+  onAnswerUpdate: (answer: number | null) => void;
   onNavigate: (direction: 'next' | 'prev') => void;
   onToggleMark: () => void;
   onFinishPractice: () => void;
@@ -44,7 +43,6 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({
     e.preventDefault();
     if (answer.trim() === '' || feedback) return;
     const userAnswer = parseInt(answer, 10);
-    onAnswerUpdate(userAnswer);
 
     const isCorrect = userAnswer === problem.correctAnswer;
     setFeedback(isCorrect ? 'correct' : 'incorrect');
@@ -56,8 +54,10 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({
   };
 
   const handleAnswerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAnswer(e.target.value);
+    const value = e.target.value;
+    setAnswer(value);
     setHasSubmitted(false);
+    onAnswerUpdate(value === '' ? null : parseInt(value, 10));
   };
 
   const padNumber = (num: number) => String(num).padStart(maxDigits, ' ');
@@ -170,6 +170,17 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({
           </button>
         )}
       </div>
+
+      {currentProblemNumber < totalProblems && (
+          <div className="mt-4">
+              <button
+                  onClick={onFinishPractice}
+                  className="w-full bg-orange-500 text-white font-bold text-lg py-3 rounded-xl hover:bg-orange-600 transition-transform transform hover:scale-105 shadow-md"
+              >
+                  Ir a Revisión
+              </button>
+          </div>
+      )}
     </div>
   );
 };

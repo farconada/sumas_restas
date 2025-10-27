@@ -108,7 +108,7 @@ const App: React.FC = () => {
     setGameState('practice');
   }, [generateProblems]);
 
-  const handleAnswerUpdate = (answer: number) => {
+  const handleAnswerUpdate = (answer: number | null) => {
     setProblems(problems.map((p, index) => 
         index === currentProblemIndex ? { ...p, userAnswer: answer } : p
     ));
