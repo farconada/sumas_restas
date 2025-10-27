@@ -1,8 +1,10 @@
+
 import React from 'react';
 import type { Problem } from '../types';
 import CheckIcon from './icons/CheckIcon';
 import XIcon from './icons/XIcon';
 import StarIcon from './icons/StarIcon';
+import BookmarkIcon from './icons/BookmarkIcon';
 
 interface ReviewScreenProps {
   problems: Problem[];
@@ -41,8 +43,11 @@ const ReviewScreen: React.FC<ReviewScreenProps> = ({ problems, onUpdateAnswer, o
               key={p.id}
               className={`flex items-center justify-between p-3 rounded-lg bg-white/50 border-2 ${borderColor}`}
             >
-              <div className="font-mono font-bold text-2xl text-gray-700">
-                {p.num1} {p.operator} {p.num2} =
+              <div className="flex items-center gap-3 font-mono font-bold text-2xl text-gray-700">
+                {p.markedForReview && <BookmarkIcon filled className="w-6 h-6 text-yellow-500 flex-shrink-0" />}
+                <span>
+                  {p.num1} {p.operator} {p.num2} =
+                </span>
               </div>
               <div className="flex items-center gap-3">
                 <input

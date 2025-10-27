@@ -94,6 +94,7 @@ const App: React.FC = () => {
         operator,
         userAnswer: null,
         correctAnswer,
+        markedForReview: false,
       });
     }
     return newProblems;
@@ -107,16 +108,28 @@ const App: React.FC = () => {
     setGameState('practice');
   }, [generateProblems]);
 
-  const handleAnswerSubmit = (answer: number) => {
-    const updatedProblems = [...problems];
-    updatedProblems[currentProblemIndex].userAnswer = answer;
-    setProblems(updatedProblems);
+  const handleAnswerUpdate = (answer: number) => {
+    setProblems(problems.map((p, index) => 
+        index === currentProblemIndex ? { ...p, userAnswer: answer } : p
+    ));
+  };
+  
+  const handleToggleMark = () => {
+    setProblems(problems.map((p, index) => 
+        index === currentProblemIndex ? { ...p, markedForReview: !p.markedForReview } : p
+    ));
+  };
 
-    if (currentProblemIndex < problems.length - 1) {
-      setCurrentProblemIndex(currentProblemIndex + 1);
-    } else {
-      setGameState('review');
+  const handleNavigate = (direction: 'next' | 'prev') => {
+    if (direction === 'next' && currentProblemIndex < problems.length - 1) {
+        setCurrentProblemIndex(currentProblemIndex + 1);
+    } else if (direction === 'prev' && currentProblemIndex > 0) {
+        setCurrentProblemIndex(currentProblemIndex - 1);
     }
+  };
+
+  const handleFinishPractice = () => {
+    setGameState('review');
   };
 
   const handleUpdateAnswerInReview = (problemId: number, newAnswer: number | null) => {
@@ -136,12 +149,14 @@ const App: React.FC = () => {
   const handleRetryIncorrect = () => {
     const incorrectProblems = problems
       .filter(p => p.userAnswer !== p.correctAnswer)
-      .map(p => ({ ...p, userAnswer: null }));
+      .map((p, index) => ({ ...p, id: index, userAnswer: null, markedForReview: false }));
     
-    if(settings) {
+    if(settings && incorrectProblems.length > 0) {
       setProblems(incorrectProblems);
       setCurrentProblemIndex(0);
       setGameState('practice');
+    } else if (settings) {
+        handleStartPractice(settings);
     }
   };
 
@@ -161,7 +176,10 @@ const App: React.FC = () => {
             currentProblemNumber={currentProblemIndex + 1}
             totalProblems={problems.length}
             maxDigits={settings?.maxDigits || 1}
-            onAnswerSubmit={handleAnswerSubmit}
+            onAnswerUpdate={handleAnswerUpdate}
+            onNavigate={handleNavigate}
+            onToggleMark={handleToggleMark}
+            onFinishPractice={handleFinishPractice}
           />
         );
       case 'review':

@@ -15,4 +15,5 @@ export interface Problem {
   operator: '+' | '-';
   userAnswer: number | null;
   correctAnswer: number;
+  markedForReview: boolean;
 }
