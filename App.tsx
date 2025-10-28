@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import type { Settings, Problem, OperationType } from './types';
 import ConfigScreen from './components/ConfigScreen';
@@ -108,7 +107,7 @@ const App: React.FC = () => {
     setGameState('practice');
   }, [generateProblems]);
 
-  const handleAnswerUpdate = (answer: number | null) => {
+  const handleAnswerUpdate = (answer: string | null) => {
     setProblems(problems.map((p, index) => 
         index === currentProblemIndex ? { ...p, userAnswer: answer } : p
     ));
@@ -132,7 +131,7 @@ const App: React.FC = () => {
     setGameState('review');
   };
 
-  const handleUpdateAnswerInReview = (problemId: number, newAnswer: number | null) => {
+  const handleUpdateAnswerInReview = (problemId: number, newAnswer: string | null) => {
     const updatedProblems = problems.map(p => {
         if (p.id === problemId) {
             return { ...p, userAnswer: newAnswer };
@@ -148,7 +147,10 @@ const App: React.FC = () => {
 
   const handleRetryIncorrect = () => {
     const incorrectProblems = problems
-      .filter(p => p.userAnswer !== p.correctAnswer)
+      .filter(p => {
+        const userAnswerNumber = p.userAnswer === null ? NaN : parseInt(p.userAnswer.replace(/\s/g, ''), 10);
+        return isNaN(userAnswerNumber) || userAnswerNumber !== p.correctAnswer;
+      })
       .map((p, index) => ({ ...p, id: index, userAnswer: null, markedForReview: false }));
     
     if(settings && incorrectProblems.length > 0) {
@@ -175,7 +177,8 @@ const App: React.FC = () => {
             problem={problems[currentProblemIndex]}
             currentProblemNumber={currentProblemIndex + 1}
             totalProblems={problems.length}
-            maxDigits={settings?.maxDigits || 1}
+            maxDigits={settings?.maxDigits || 2}
+            showCheckButton={settings?.showCheckButton ?? true}
             onAnswerUpdate={handleAnswerUpdate}
             onNavigate={handleNavigate}
             onToggleMark={handleToggleMark}
@@ -186,6 +189,8 @@ const App: React.FC = () => {
         return (
           <ReviewScreen
             problems={problems}
+            maxDigits={settings?.maxDigits || 2}
+            showResultsInReview={settings?.showResultsInReview ?? true}
             onUpdateAnswer={handleUpdateAnswerInReview}
             onFinishReview={handleFinishReview}
           />

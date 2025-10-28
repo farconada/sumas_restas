@@ -12,7 +12,11 @@ interface ResultsScreenProps {
 }
 
 const ResultsScreen: React.FC<ResultsScreenProps> = ({ problems, onRetryIncorrect, onStartOver }) => {
-  const correctCount = problems.filter(p => p.userAnswer === p.correctAnswer).length;
+  const correctCount = problems.filter(p => {
+    const userAnswerNumber = p.userAnswer === null ? NaN : parseInt(p.userAnswer.replace(/\s/g, ''), 10);
+    return !isNaN(userAnswerNumber) && userAnswerNumber === p.correctAnswer;
+  }).length;
+
   const totalCount = problems.length;
   const incorrectProblemsExist = correctCount < totalCount;
 
@@ -40,7 +44,9 @@ const ResultsScreen: React.FC<ResultsScreenProps> = ({ problems, onRetryIncorrec
 
       <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
         {problems.map((p) => {
-          const isCorrect = p.userAnswer === p.correctAnswer;
+          const userAnswerNumber = p.userAnswer === null ? NaN : parseInt(p.userAnswer.replace(/\s/g, ''), 10);
+          const isCorrect = !isNaN(userAnswerNumber) && userAnswerNumber === p.correctAnswer;
+          
           return (
             <div
               key={p.id}
@@ -56,7 +62,7 @@ const ResultsScreen: React.FC<ResultsScreenProps> = ({ problems, onRetryIncorrec
               </div>
               {!isCorrect && (
                 <span className="font-bold text-red-600 text-lg">
-                  Tu respuesta: <span className="line-through">{p.userAnswer ?? 'N/A'}</span>
+                  Tu respuesta: <span className="line-through">{p.userAnswer?.replace(/\s/g, '') ?? 'N/A'}</span>
                 </span>
               )}
             </div>

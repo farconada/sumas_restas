@@ -6,6 +6,8 @@ export interface Settings {
   numProblems: number;
   operationType: OperationType;
   forceCarry: boolean;
+  showCheckButton: boolean;
+  showResultsInReview: boolean;
 }
 
 export interface Problem {
@@ -13,7 +15,7 @@ export interface Problem {
   num1: number;
   num2: number;
   operator: '+' | '-';
-  userAnswer: number | null;
+  userAnswer: string | null;
   correctAnswer: number;
   markedForReview: boolean;
 }

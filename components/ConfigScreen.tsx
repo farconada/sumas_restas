@@ -12,13 +12,37 @@ const ConfigScreen: React.FC<ConfigScreenProps> = ({ onStart }) => {
   const [numProblems, setNumProblems] = useState(10);
   const [operationType, setOperationType] = useState<OperationType>('mixed');
   const [forceCarry, setForceCarry] = useState(false);
+  const [showCheckButton, setShowCheckButton] = useState(true);
+  const [showResultsInReview, setShowResultsInReview] = useState(true);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (maxDigits > 0 && numProblems > 0) {
-      onStart({ maxDigits, numProblems, operationType, forceCarry });
+      onStart({ maxDigits, numProblems, operationType, forceCarry, showCheckButton, showResultsInReview });
     }
   };
+
+  const ToggleOption: React.FC<{
+    id: string;
+    checked: boolean;
+    onChange: (checked: boolean) => void;
+    label: string;
+    bgColor?: string;
+    borderColor?: string;
+  }> = ({ id, checked, onChange, label, bgColor = 'bg-purple-50', borderColor = 'border-purple-200' }) => (
+    <div className={`flex items-center justify-center p-3 rounded-lg border-2 ${bgColor} ${borderColor}`}>
+        <input
+            type="checkbox"
+            id={id}
+            checked={checked}
+            onChange={(e) => onChange(e.target.checked)}
+            className="w-5 h-5 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 cursor-pointer"
+        />
+        <label htmlFor={id} className="ml-3 text-md font-bold text-gray-700 cursor-pointer select-none">
+            {label}
+        </label>
+    </div>
+  );
 
   return (
     <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-lg border border-white">
@@ -78,17 +102,29 @@ const ConfigScreen: React.FC<ConfigScreenProps> = ({ onStart }) => {
           </div>
         </div>
 
-        <div className="flex items-center justify-center p-3 bg-purple-50 rounded-lg border-2 border-purple-200">
-            <input
-                type="checkbox"
-                id="forceCarry"
-                checked={forceCarry}
-                onChange={(e) => setForceCarry(e.target.checked)}
-                className="w-5 h-5 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 cursor-pointer"
-            />
-            <label htmlFor="forceCarry" className="ml-3 text-md font-bold text-gray-700 cursor-pointer select-none">
-                Forzar llevadas y restas prestando
-            </label>
+        <div className="space-y-3">
+          <ToggleOption 
+            id="forceCarry"
+            checked={forceCarry}
+            onChange={setForceCarry}
+            label="Forzar llevadas y restas prestando"
+          />
+           <ToggleOption 
+            id="showCheckButton"
+            checked={showCheckButton}
+            onChange={setShowCheckButton}
+            label="Habilitar botón 'Comprobar' en práctica"
+            bgColor="bg-blue-50"
+            borderColor="border-blue-200"
+          />
+           <ToggleOption 
+            id="showResultsInReview"
+            checked={showResultsInReview}
+            onChange={setShowResultsInReview}
+            label="Mostrar resultados provisionales en revisión"
+            bgColor="bg-green-50"
+            borderColor="border-green-200"
+          />
         </div>
 
 

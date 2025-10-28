@@ -9,7 +9,8 @@ interface PracticeScreenProps {
   currentProblemNumber: number;
   totalProblems: number;
   maxDigits: number;
-  onAnswerUpdate: (answer: number | null) => void;
+  showCheckButton: boolean;
+  onAnswerUpdate: (answer: string | null) => void;
   onNavigate: (direction: 'next' | 'prev') => void;
   onToggleMark: () => void;
   onFinishPractice: () => void;
@@ -20,48 +21,97 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({
   currentProblemNumber,
   totalProblems,
   maxDigits,
+  showCheckButton,
   onAnswerUpdate,
   onNavigate,
   onToggleMark,
   onFinishPractice,
 }) => {
-  const [answer, setAnswer] = useState(problem.userAnswer?.toString() ?? '');
+  const problemWidth = maxDigits + 1;
+  const [answerDigits, setAnswerDigits] = useState<string[]>(Array(problemWidth).fill(''));
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
-  const [hasSubmitted, setHasSubmitted] = useState(problem.userAnswer !== null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   useEffect(() => {
-    setAnswer(problem.userAnswer?.toString() ?? '');
+    const initialDigits = (problem.userAnswer ?? '').padStart(problemWidth, ' ').split('').map(c => c === ' ' ? '' : c);
+    setAnswerDigits(initialDigits);
+
     setFeedback(null);
-    setHasSubmitted(problem.userAnswer !== null);
-    if (inputRef.current) {
-      inputRef.current.focus();
+    setHasSubmitted(false);
+    
+    if (problem.userAnswer === null && inputRefs.current[problemWidth - 1]) {
+      inputRefs.current[problemWidth - 1]?.focus();
     }
-  }, [problem]);
+  }, [problem, problemWidth]);
+
+  const handleAnswerChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const { value } = e.target;
+    if (!/^[0-9]?$/.test(value)) return;
+
+    const newDigits = [...answerDigits];
+    newDigits[index] = value;
+    setAnswerDigits(newDigits);
+
+    const newAnswerString = newDigits.map(d => d || ' ').join('');
+    
+    if (newAnswerString.trim() === '') {
+      onAnswerUpdate(null);
+    } else {
+      onAnswerUpdate(newAnswerString);
+    }
+
+    if (value && index > 0) {
+        inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+      if (e.key === 'Backspace' && answerDigits[index] === '') {
+          e.preventDefault();
+          if (index > 0) {
+              inputRefs.current[index - 1]?.focus();
+          }
+      } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          if (index > 0) {
+              inputRefs.current[index - 1]?.focus();
+          }
+      } else if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          if (index < problemWidth - 1) {
+              inputRefs.current[index + 1]?.focus();
+          }
+      }
+  };
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (answer.trim() === '' || feedback) return;
-    const userAnswer = parseInt(answer, 10);
-
-    const isCorrect = userAnswer === problem.correctAnswer;
-    setFeedback(isCorrect ? 'correct' : 'incorrect');
+    if (problem.userAnswer === null || !showCheckButton) return;
+    
     setHasSubmitted(true);
+    const userAnswerNumber = parseInt((problem.userAnswer ?? '').replace(/\s/g, ''), 10);
+    const isCorrect = !isNaN(userAnswerNumber) && userAnswerNumber === problem.correctAnswer;
+    setFeedback(isCorrect ? 'correct' : 'incorrect');
 
-    setTimeout(() => {
-      setFeedback(null);
-    }, 1200);
+    if (isCorrect) {
+        setTimeout(() => {
+            if (currentProblemNumber < totalProblems) {
+                onNavigate('next');
+            } else {
+                onFinishPractice();
+            }
+        }, 1200);
+    } else {
+         setTimeout(() => {
+            setFeedback(null);
+            setHasSubmitted(false);
+         }, 1500);
+    }
   };
-
-  const handleAnswerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setAnswer(value);
-    setHasSubmitted(false);
-    onAnswerUpdate(value === '' ? null : parseInt(value, 10));
-  };
-
-  const padNumber = (num: number) => String(num).padStart(maxDigits, ' ');
-
+  
   const getFeedbackBorderStyle = () => {
     if (feedback === 'correct') return 'border-green-400';
     if (feedback === 'incorrect') return 'border-red-400';
@@ -70,16 +120,19 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({
 
   const getButtonText = () => {
     if (feedback === 'correct') return '¡Correcto!';
-    if (feedback === 'incorrect') return 'Incorrecto';
+    if (feedback === 'incorrect') return 'Inténtalo de nuevo';
     return 'Comprobar';
   };
+  
+  const paddedNum1 = String(problem.num1).padStart(problemWidth, ' ');
+  const paddedNum2WithOperator = `${problem.operator}${String(problem.num2).padStart(problemWidth - 1, ' ')}`;
 
   return (
     <div
       className={`relative bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-lg border-4 animate-fade-in transition-colors duration-300 ${getFeedbackBorderStyle()}`}
     >
       {feedback && (
-        <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center rounded-xl z-10">
+        <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center rounded-xl z-20">
           {feedback === 'correct' ? (
             <CheckIcon className="w-32 h-32 text-green-500 animate-pop-in" />
           ) : (
@@ -116,33 +169,40 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({
         </button>
 
         <div className="bg-blue-50/50 p-6 rounded-lg border-2 border-dashed border-blue-200 mt-2">
-          <div className="text-right text-7xl font-black font-mono text-gray-800 tracking-wider">
-            <div>{padNumber(problem.num1)}</div>
-            <div className="flex justify-end items-center">
-              <span className="text-5xl mr-4">{problem.operator}</span>
-              <span>{padNumber(problem.num2)}</span>
-            </div>
+          <div className="text-right text-7xl font-black font-mono text-gray-800 tracking-wider whitespace-pre">
+            <div>{paddedNum1}</div>
+            <div>{paddedNum2WithOperator}</div>
           </div>
           <hr className="my-4 border-t-4 border-gray-700" />
-          <input
-            ref={inputRef}
-            type="number"
-            value={answer}
-            onChange={handleAnswerChange}
-            placeholder="?"
-            className="w-full text-right text-7xl font-black font-mono bg-transparent text-green-600 outline-none pr-1 disabled:opacity-50"
-            autoFocus
-            disabled={!!feedback}
-          />
+          <div className="flex justify-end font-mono text-7xl font-black text-green-600 tracking-wider gap-1" dir="ltr">
+             {answerDigits.map((digit, index) => (
+                <input
+                  key={index}
+                  ref={el => { inputRefs.current[index] = el; }}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handleAnswerChange(e, index)}
+                  onKeyDown={(e) => handleKeyDown(e, index)}
+                  onFocus={(e) => e.target.select()}
+                  className="w-14 h-20 bg-blue-100/40 text-center flex items-center justify-center outline-none rounded-lg border-b-4 border-blue-200 focus:bg-blue-100 focus:ring-2 focus:ring-blue-400"
+                  aria-label={`dígito de la respuesta ${index + 1}`}
+                  disabled={hasSubmitted}
+                />
+             ))}
+          </div>
         </div>
 
-        <button
-          type="submit"
-          disabled={!!feedback || hasSubmitted || answer.trim() === ''}
-          className="mt-6 w-full bg-blue-500 text-white font-black text-2xl py-4 rounded-xl hover:bg-blue-600 transition-transform transform hover:scale-105 shadow-lg disabled:bg-gray-400 disabled:scale-100 disabled:cursor-not-allowed"
-        >
-          {getButtonText()}
-        </button>
+        {showCheckButton && (
+          <button
+            type="submit"
+            disabled={problem.userAnswer === null || hasSubmitted}
+            className="mt-6 w-full bg-blue-500 text-white font-black text-2xl py-4 rounded-xl hover:bg-blue-600 transition-transform transform hover:scale-105 shadow-lg disabled:bg-gray-400 disabled:scale-100 disabled:cursor-not-allowed"
+          >
+            {getButtonText()}
+          </button>
+        )}
       </form>
 
       <div className="mt-4 grid grid-cols-2 gap-4">
