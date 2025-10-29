@@ -18,10 +18,13 @@ const ResultsScreen: React.FC<ResultsScreenProps> = ({ problems, onRetryIncorrec
   }).length;
 
   const totalCount = problems.length;
+  const incorrectCount = totalCount - correctCount;
+  const score = totalCount > 0 ? ((correctCount / totalCount) * 10).toFixed(1) : '0.0';
+
   const incorrectProblemsExist = correctCount < totalCount;
 
   const scoreMessage = () => {
-    const percentage = (correctCount / totalCount) * 100;
+    const percentage = totalCount > 0 ? (correctCount / totalCount) * 100 : 0;
     if (percentage === 100) return "¡Felicidades! ¡Todo perfecto!";
     if (percentage >= 80) return "¡Muy bien! ¡Sigue así!";
     if (percentage >= 50) return "¡Buen intento! ¡A seguir practicando!";
@@ -37,9 +40,14 @@ const ResultsScreen: React.FC<ResultsScreenProps> = ({ problems, onRetryIncorrec
             <StarIcon className="w-10 h-10 text-yellow-400" />
         </div>
         <p className="text-2xl font-bold text-purple-600 mt-2">{scoreMessage()}</p>
-        <p className="text-5xl font-black text-gray-700 my-4">
-          {correctCount} <span className="text-3xl font-bold text-gray-500">/ {totalCount}</span>
-        </p>
+        <div className="my-4">
+          <p className="text-7xl font-black text-gray-800 leading-tight">
+            {score}
+          </p>
+          <p className="text-md font-semibold text-gray-500 mt-1">
+            ({incorrectCount} {incorrectCount === 1 ? 'error' : 'errores'} de {totalCount})
+          </p>
+        </div>
       </div>
 
       <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
